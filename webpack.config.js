@@ -8,7 +8,7 @@ module.exports = {
         './src/index.js'
     ],
     plugins: [
-        new CleanWebpuckPlugin(['dist']),
+        // new CleanWebpuckPlugin(['dist']),
         new HtmlWebpackPlugin({
             title: 'Output Managment',
             hash: true,
@@ -19,12 +19,23 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: 'main.js'
     },
-    // devtool: 'source-map',
+    devtool: 'source-map',
     devServer: {
         contentBase: './dist'
     },
     module: {
         rules: [
+            {
+                test: /\.m?js$/,
+                exclude: /(node_modules|bower_components)/,
+                use: {
+                  loader: 'babel-loader',
+                  options: {
+                    presets: ['@babel/preset-env'],
+                    plugins: [require('@babel/plugin-proposal-object-rest-spread')]
+                  }
+                }
+            },
             {
                 test: /\.css$/,
                 use: [
@@ -36,6 +47,6 @@ module.exports = {
     },
     watchOptions: {
         aggregateTimeout: 300,
-        poll: 1000 // Check for changes every second
+        poll: 300 // Check for changes every second
     }
 }
