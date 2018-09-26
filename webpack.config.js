@@ -2,6 +2,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpuckPlugin = require('clean-webpack-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require('webpack');
 
 module.exports = {
@@ -15,6 +16,13 @@ module.exports = {
             hash: true,
             template: './src/index.html'
         }),
+        new MiniCssExtractPlugin({
+            // Options similar to the same options in webpackOptions.output
+            // both options are optional
+            filename: "[name].css",
+            chunkFilename: "[id].css"
+        }),
+        new webpack.HashedModuleIdsPlugin(),
         new webpack.HotModuleReplacementPlugin()
     ],
     output: {
@@ -42,7 +50,8 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: [
-                    'style-loader',
+                    'css-hot-loader',
+                    MiniCssExtractPlugin.loader,
                     'css-loader'
                 ]
             }
@@ -51,5 +60,17 @@ module.exports = {
     watchOptions: {
         aggregateTimeout: 300,
         poll: 300 // Check for changes every second
+    },
+    optimization: {
+        runtimeChunk: 'single',
+        splitChunks: {
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all'
+            }
+          }
+        }
     }
 }
