@@ -2,6 +2,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpuckPlugin = require('clean-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
     entry: [
@@ -13,7 +14,8 @@ module.exports = {
             title: 'Output Managment',
             hash: true,
             template: './src/index.html'
-        })
+        }),
+        new webpack.HotModuleReplacementPlugin()
     ],
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -21,7 +23,8 @@ module.exports = {
     },
     devtool: 'source-map',
     devServer: {
-        contentBase: './dist'
+        contentBase: './dist',
+        hot: true
     },
     module: {
         rules: [
