@@ -23,7 +23,7 @@ module.exports = {
             chunkFilename: "[id].css"
         }),
         new webpack.HashedModuleIdsPlugin(),
-        new webpack.HotModuleReplacementPlugin()
+        // new webpack.HotModuleReplacementPlugin()
     ],
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -31,8 +31,8 @@ module.exports = {
     },
     devtool: 'source-map',
     devServer: {
-        contentBase: './dist',
-        hot: true
+        contentBase: './dist'
+        // hot: true
     },
     module: {
         rules: [
