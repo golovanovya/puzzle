@@ -6,33 +6,43 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require('webpack');
 
 module.exports = {
-    entry: [
-        './src/index.js'
-    ],
+    entry: {
+        vendor: [
+            'jquery',
+            'bootstrap/dist/css/bootstrap.min.css',
+            'bootstrap',
+            'konva'
+        ],
+        bundle: './src/index.js'
+    },
     plugins: [
         // new CleanWebpuckPlugin(['dist']),
         new HtmlWebpackPlugin({
-            title: 'Output Managment',
-            hash: true,
+            title: 'Puzzle HTML 5',
+            // hash: true,
             template: './src/index.html'
         }),
-        new MiniCssExtractPlugin({
-            // Options similar to the same options in webpackOptions.output
-            // both options are optional
-            filename: "[name].css",
-            chunkFilename: "[id].css"
-        }),
-        new webpack.HashedModuleIdsPlugin(),
-        // new webpack.HotModuleReplacementPlugin()
+        // new MiniCssExtractPlugin({
+        //     // Options similar to the same options in webpackOptions.output
+        //     // both options are optional
+        //     filename: "[name].css",
+        //     chunkFilename: "[id].css"
+        // }),
+        // new webpack.HashedModuleIdsPlugin(),
+        new webpack.HotModuleReplacementPlugin()
     ],
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'main.js'
+        pathinfo: true,
+        filename: '[name].js'
     },
-    devtool: 'source-map',
+    devtool: 'eval',
     devServer: {
-        contentBase: './dist'
-        // hot: true
+        contentBase: './dist',
+        hot: true,
+        host: '0.0.0.0',
+        openPage: 'http://127.0.0.1/',
+        port: 80
     },
     module: {
         rules: [
@@ -51,7 +61,8 @@ module.exports = {
                 test: /\.css$/,
                 use: [
                     'css-hot-loader',
-                    MiniCssExtractPlugin.loader,
+                    'style-loader',
+                    // MiniCssExtractPlugin.loader,
                     'css-loader'
                 ]
             }
