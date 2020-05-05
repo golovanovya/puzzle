@@ -1,3 +1,42 @@
-body {
-    /* background: yellow; */
+.puzzle {
+    background-color: lightgreen;
+    width: 1000px;
+    height: 1000px;
+}
+
+.puzzle__tile-container {
+    margin: 0;
+    padding: 0;
+}
+
+.puzzle__tile {
+    background-color: antiquewhite;
+    box-sizing: border-box;
+    border: 1px solid black;
+    width: 100px;
+    height: 100px;
+    margin: 0;
+    padding: 2px;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    position: absolute;
+    z-index: 1;
+}
+
+.puzzle__tile-label {
+    flex-grow: 1;
+    text-align: center;
+}
+.puzzle__tile-label_left {
+    text-align: initial;
+}
+.puzzle__tile-label_right {
+    text-align: right;
+}
+
+.puzzle__tile-label_top,
+.puzzle__tile-label_bottom {
+    flex-grow: 3;
+    width: 100%;
 }
