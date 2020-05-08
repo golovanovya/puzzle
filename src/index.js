@@ -61,9 +61,7 @@ function moveTileWithGroup(tile) {
         const current = tile.group[i];
         current.x += shiftX;
         current.y += shiftY;
-        if (current !== tile) {
-            redrawTile(current);
-        }
+        redrawTile(current);
     }
 }
 
@@ -76,10 +74,10 @@ function testMatching() {
             const left = tiles[tile.index - 1];
             if (left.group !== tile.group) {
                 const distance = length(tile.x, tile.y, left.x + tileSize, left.y);
-                if (distance > 0 && distance <= tolerance) {
-                    left.x = tile.x - tileSize;
-                    left.y = tile.y;
+                if (distance <= tolerance) {
                     if (distance > 0) {
+                        left.x = tile.x - tileSize;
+                        left.y = tile.y;
                         redrawTile(left);
                         moved = true;
                     }
@@ -91,23 +89,27 @@ function testMatching() {
         }
         if (hasTop(tile.i)) {
             const top = tiles[getTop(tile.index, cols)];
-            const distance = length(tile.x, tile.y, top.x, top.y + tileSize);
-            if (distance <= tolerance) {
-                top.x = tile.x;
-                top.y = tile.y - tileSize;
-                if (distance > 0) {
-                    redrawTile(top);
-                    moved = true;
+            if (top.group !== tile.group) {
+                const distance = length(tile.x, tile.y, top.x, top.y + tileSize);
+                if (distance <= tolerance) {
+                    if (distance > 0) {
+                        top.x = tile.x;
+                        top.y = tile.y - tileSize;
+                        redrawTile(top);
+                        moved = true;
+                    }
+                    console.log('top match');
+                    changeGroup(top, tile);
+                    matched++;
                 }
-                console.log('top match');
-                changeGroup(top, tile);
-                matched++;
             }
         }
     }
     console.log(`matched ${matched}`);
     if (moved) {
         testMatching();
+    } else if (tileGroups.length === 1) {
+        setTimeout(() => alert('puzzle assembled'), 1);
     }
 }
 
