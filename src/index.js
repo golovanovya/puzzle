@@ -1,19 +1,57 @@
 'use strict';
 import './style.css';
 
-const VALLEY = -1;
-const FLAT = 0;
-const MOUNTED = 1;
+const SIDE_TYPES = {
+    VALLEY: -1,
+    FLAT: 0,
+    MOUNTED: 1
+};
+
+class Point {
+    constructor(x, y) {
+        this._x = x;
+        this._y = y;
+    }
+    get x() {
+        return this._x;
+    }
+    get y() {
+        return this._y;
+    }
+
+    set x(x) {
+        this._x = x;
+    }
+    set y(y) {
+        this._y = y;
+    }
+}
+
+class Tile {
+    constructor(position, index, width, height, sides) {
+        this.position = position;
+        this.width = width;
+        this.height = height;
+        this.sides = sides;
+        this.index = index;
+    }
+}
+
+class Group {
+    constructor(...tiles) {
+        this.tiles = tiles;
+    }
+}
 
 function getRandomSide() {
     const rand = Math.round(Math.random());
-    return rand === 0 ? MOUNTED : VALLEY;
+    return rand === 0 ? SIDE_TYPES.MOUNTED : SIDE_TYPES.VALLEY;
 }
 
 const tiles = [];
-const cols = 3;
-const rows = 3;
-const tileSize = 100;
+const COLS = 3;
+const ROWS = 4;
+const TILE_SIZE = 100;
 const tolerance = 20;
 
 const puzzleElement = document.createElement('div');
@@ -25,20 +63,19 @@ const puzzle = {
 
 let tileGroups = [];
 
-for (let i = 0; i < rows; i++) {
-    for (let j = 0; j < cols; j++) {
+for (let i = 0; i < ROWS; i++) {
+    for (let j = 0; j < COLS; j++) {
         const tile = {};
         const group = [];
-        const index = (i * cols) + j;
+        const index = (i * COLS) + j;
         tile.i = i;
         tile.j = j;
         tile.index = index;
-        tile.x = tile.j * tileSize + tile.j * 50;
-        tile.y = tile.i * tileSize + tile.i * 50;
-        tile.top = hasTop(i) ? tiles[getTop(index, cols)].bottom * -1 : FLAT;
-        tile.right = hasRight(j, cols) ? getRandomSide() : FLAT;
-        tile.bottom = hasBottom(i, rows) ? getRandomSide() : FLAT;
-        tile.left = hasLeft(j) ?  tiles[index - 1].right * -1 : FLAT;
+        tile.position = new Point(j * TILE_SIZE + j * 50, i * TILE_SIZE + i * 50);
+        tile.top = hasTop(i) ? tiles[getTop(index, COLS)].bottom * -1 : SIDE_TYPES.FLAT;
+        tile.right = hasRight(j, COLS) ? getRandomSide() : SIDE_TYPES.FLAT;
+        tile.bottom = hasBottom(i, ROWS) ? getRandomSide() : SIDE_TYPES.FLAT;
+        tile.left = hasLeft(j) ?  tiles[index - 1].right * -1 : SIDE_TYPES.FLAT;
         tile.element = drawTile(tile);
         tile.element.addEventListener('mouseover', mouseOverTile);
         tile.element.addEventListener('tile_drag', (e) => {
@@ -55,12 +92,12 @@ for (let i = 0; i < rows; i++) {
 function moveTileWithGroup(tile) {
     const x = parseInt(tile.element.style.left);
     const y = parseInt(tile.element.style.top);
-    const shiftX = x - tile.x;
-    const shiftY = y - tile.y;
+    const shiftX = x - tile.position.x;
+    const shiftY = y - tile.position.y;
     for (let i = 0; i < tile.group.length; i++) {
         const current = tile.group[i];
-        current.x += shiftX;
-        current.y += shiftY;
+        current.position.x += shiftX;
+        current.position.y += shiftY;
         redrawTile(current);
     }
 }
@@ -73,11 +110,11 @@ function testMatching() {
         if (hasLeft(tile.j)) {
             const left = tiles[tile.index - 1];
             if (left.group !== tile.group) {
-                const distance = length(tile.x, tile.y, left.x + tileSize, left.y);
+                const distance = length(tile.position.x, tile.position.y, left.position.x + TILE_SIZE, left.position.y);
                 if (distance <= tolerance) {
                     if (distance > 0) {
-                        left.x = tile.x - tileSize;
-                        left.y = tile.y;
+                        left.position.x = tile.position.x - TILE_SIZE;
+                        left.position.y = tile.position.y;
                         redrawTile(left);
                         moved = true;
                     }
@@ -88,13 +125,13 @@ function testMatching() {
             }
         }
         if (hasTop(tile.i)) {
-            const top = tiles[getTop(tile.index, cols)];
+            const top = tiles[getTop(tile.index, COLS)];
             if (top.group !== tile.group) {
-                const distance = length(tile.x, tile.y, top.x, top.y + tileSize);
+                const distance = length(tile.position.x, tile.position.y, top.position.x, top.position.y + TILE_SIZE);
                 if (distance <= tolerance) {
                     if (distance > 0) {
-                        top.x = tile.x;
-                        top.y = tile.y - tileSize;
+                        top.position.x = tile.position.x;
+                        top.position.y = tile.position.y - TILE_SIZE;
                         redrawTile(top);
                         moved = true;
                     }
@@ -114,8 +151,8 @@ function testMatching() {
 }
 
 function redrawTile(tile) {
-    tile.element.style.left = `${tile.x}px`;
-    tile.element.style.top = `${tile.y}px`;
+    tile.element.style.left = `${tile.position.x}px`;
+    tile.element.style.top = `${tile.position.y}px`;
 }
 
 function changeGroup(from, to) {
@@ -160,7 +197,7 @@ function length(x1, y1, x2, y2) {
 function drawTile(tile) {
     const element = document.createElement('ul');
     element.className = 'puzzle__tile draggable';
-    element.style = `top:${tile.y}px;left:${tile.x}px`;
+    element.style = `top:${tile.position.y}px;left:${tile.position.x}px`;
     let tileContent = '';
     tileContent += `<li class="puzzle__tile-label puzzle__tile-label_top">${tile.top}</li>`;
     tileContent += `<li class="puzzle__tile-label puzzle__tile-label_left">${tile.left}</li>`;
