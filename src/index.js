@@ -25,15 +25,41 @@ class Point {
     set y(y) {
         this._y = y;
     }
+
+    distance(point) {
+        return Math.abs(Math.sqrt(Math.pow(point.x - this.x, 2) + Math.pow(point.y - this.y, 2)));
+    }
 }
 
 class Tile {
     constructor(position, index, width, height, sides) {
+        if (position instanceof Point === false) {
+            throw new Error('position must be a Point class');
+        }
+        if (Array.isArray(sides) === false || sides.length !== 4) {
+            throw new Error('sides must be array with length 4');
+        }
         this.position = position;
+        this.index = index;
         this.width = width;
         this.height = height;
         this.sides = sides;
-        this.index = index;
+    }
+
+    get top() {
+        return this.sides[0];
+    }
+
+    get right() {
+        return this.sides[1];
+    }
+
+    get bottom() {
+        return this.sides[2];
+    }
+
+    get left() {
+        return this.sides[3];
     }
 }
 
@@ -65,17 +91,17 @@ let tileGroups = [];
 
 for (let i = 0; i < ROWS; i++) {
     for (let j = 0; j < COLS; j++) {
-        const tile = {};
         const group = [];
         const index = (i * COLS) + j;
+        const position = new Point(j * TILE_SIZE + j * 50, i * TILE_SIZE + i * 50);
+        const top = hasTop(i) ? tiles[getTop(index, COLS)].bottom * -1 : SIDE_TYPES.FLAT;
+        const right = hasRight(j, COLS) ? getRandomSide() : SIDE_TYPES.FLAT;
+        const bottom = hasBottom(i, ROWS) ? getRandomSide() : SIDE_TYPES.FLAT;
+        const left = hasLeft(j) ?  tiles[index - 1].right * -1 : SIDE_TYPES.FLAT;
+        const sides = [top, right, bottom, left];
+        const tile = new Tile(position, index, TILE_SIZE, TILE_SIZE, sides);
         tile.i = i;
         tile.j = j;
-        tile.index = index;
-        tile.position = new Point(j * TILE_SIZE + j * 50, i * TILE_SIZE + i * 50);
-        tile.top = hasTop(i) ? tiles[getTop(index, COLS)].bottom * -1 : SIDE_TYPES.FLAT;
-        tile.right = hasRight(j, COLS) ? getRandomSide() : SIDE_TYPES.FLAT;
-        tile.bottom = hasBottom(i, ROWS) ? getRandomSide() : SIDE_TYPES.FLAT;
-        tile.left = hasLeft(j) ?  tiles[index - 1].right * -1 : SIDE_TYPES.FLAT;
         tile.element = drawTile(tile);
         tile.element.addEventListener('mouseover', mouseOverTile);
         tile.element.addEventListener('tile_drag', (e) => {
@@ -110,7 +136,7 @@ function testMatching() {
         if (hasLeft(tile.j)) {
             const left = tiles[tile.index - 1];
             if (left.group !== tile.group) {
-                const distance = length(tile.position.x, tile.position.y, left.position.x + TILE_SIZE, left.position.y);
+                const distance = tile.position.distance(new Point(left.position.x + TILE_SIZE, left.position.y));
                 if (distance <= tolerance) {
                     if (distance > 0) {
                         left.position.x = tile.position.x - TILE_SIZE;
@@ -127,7 +153,7 @@ function testMatching() {
         if (hasTop(tile.i)) {
             const top = tiles[getTop(tile.index, COLS)];
             if (top.group !== tile.group) {
-                const distance = length(tile.position.x, tile.position.y, top.position.x, top.position.y + TILE_SIZE);
+                const distance = tile.position.distance(new Point(top.position.x, top.position.y + TILE_SIZE));
                 if (distance <= tolerance) {
                     if (distance > 0) {
                         top.position.x = tile.position.x;
