@@ -6,6 +6,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require('webpack');
 
 module.exports = {
+    // context: path.resolve(__dirname),
     entry: {
         vendor: [
             'jquery',
@@ -36,13 +37,10 @@ module.exports = {
         pathinfo: true,
         filename: '[name].js'
     },
-    devtool: 'eval',
+    devtool: 'eval-source-map',
     devServer: {
         contentBase: './dist',
-        hot: true,
-        host: '0.0.0.0',
-        openPage: 'http://127.0.0.1/',
-        port: 80
+        hot: true
     },
     module: {
         rules: [

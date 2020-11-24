@@ -9,30 +9,63 @@ const SIDE_TYPES = {
 
 class Point {
     constructor(x, y) {
-        this._x = x;
-        this._y = y;
-    }
-    get x() {
-        return this._x;
-    }
-    get y() {
-        return this._y;
+        this.x = x;
+        this.y = y;
     }
 
-    set x(x) {
-        this._x = x;
-    }
-    set y(y) {
-        this._y = y;
-    }
-
-    distance(point) {
-        return Math.abs(Math.sqrt(Math.pow(point.x - this.x, 2) + Math.pow(point.y - this.y, 2)));
+    distanceTo(point) {
+        return new Vector(this, point).length();
     }
 }
 
-class Tile {
+class Vector {
+    constructor(start, end) {
+        this.start = start;
+        this.end = end;
+    }
+
+    get x() {
+        return this.end.x - this.start.x;
+    }
+
+    get y() {
+        return this.end.y - this.start.y;
+    }
+
+    length() {
+        return Math.abs(Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2)));
+    }
+}
+
+class Element {
+    constructor(...elements) {
+        elements.forEach(element => element.parent = this);
+        this.elements = elements;
+    }
+
+    add(element) {
+        const parent = element.parent;
+        if (parent) {
+            parent.remove(element);
+        }
+        element.parent = this;
+        this.elements.push(element);
+    }
+
+    remove(element) {
+        const index = this.elements.indexOf(element);
+        if (index >= 0) {
+            this.elements.splice(index, 1);
+            element.parent = null;
+        } else {
+            throw new Error("element not found");
+        }
+    }
+}
+
+class Tile extends Element {
     constructor(position, index, width, height, sides) {
+        super();
         if (position instanceof Point === false) {
             throw new Error('position must be a Point class');
         }
@@ -44,6 +77,29 @@ class Tile {
         this.width = width;
         this.height = height;
         this.sides = sides;
+        this.isDragging = false;
+    }
+
+    set moveTo(position) {
+        this.position = position;
+    }
+
+    set move(vector) {
+        this.position.x += vector.x;
+        this.position.y += vector.y;
+    }
+
+    get topLeft() {
+        return this.position;
+    }
+    get topRight() {
+        return new Point(this.position.x + this.width, this.position.y);
+    }
+    get bottomLeft() {
+        return new Point(this.position.x, this.position.y + this.height);
+    }
+    get topLeft() {
+        return new Point(this.position.x + this.width, this.position.y + this.height);
     }
 
     get top() {
@@ -63,9 +119,18 @@ class Tile {
     }
 }
 
-class Group {
-    constructor(...tiles) {
-        this.tiles = tiles;
+class Group extends Element {
+    merge(group) {
+        if (this !== group) {
+            group.elements.forEach(element => super.add(element));
+        }
+    }
+}
+
+class Grid extends Element {
+    constructor() {
+        super();
+        this.tiles = [];
     }
 }
 
@@ -74,121 +139,78 @@ function getRandomSide() {
     return rand === 0 ? SIDE_TYPES.MOUNTED : SIDE_TYPES.VALLEY;
 }
 
-const tiles = [];
 const COLS = 3;
-const ROWS = 4;
+const ROWS = 3;
 const TILE_SIZE = 100;
-const tolerance = 20;
+const TOLERANCE = 20;
 
 const puzzleElement = document.createElement('div');
 puzzleElement.className = 'puzzle';
-const puzzle = {
-    element: puzzleElement,
-    tiles: tiles
-};
 
-let tileGroups = [];
+const grid = new Grid();
 
 for (let i = 0; i < ROWS; i++) {
     for (let j = 0; j < COLS; j++) {
-        const group = [];
         const index = (i * COLS) + j;
         const position = new Point(j * TILE_SIZE + j * 50, i * TILE_SIZE + i * 50);
-        const top = hasTop(i) ? tiles[getTop(index, COLS)].bottom * -1 : SIDE_TYPES.FLAT;
+        const top = hasTop(i) ? grid.tiles[getTop(index, COLS)].bottom * -1 : SIDE_TYPES.FLAT;
         const right = hasRight(j, COLS) ? getRandomSide() : SIDE_TYPES.FLAT;
         const bottom = hasBottom(i, ROWS) ? getRandomSide() : SIDE_TYPES.FLAT;
-        const left = hasLeft(j) ?  tiles[index - 1].right * -1 : SIDE_TYPES.FLAT;
+        const left = hasLeft(j) ?  grid.tiles[index - 1].right * -1 : SIDE_TYPES.FLAT;
         const sides = [top, right, bottom, left];
         const tile = new Tile(position, index, TILE_SIZE, TILE_SIZE, sides);
         tile.i = i;
         tile.j = j;
         tile.element = drawTile(tile);
         tile.element.addEventListener('mouseover', mouseOverTile);
-        tile.element.addEventListener('tile_drag', (e) => {
-            moveTileWithGroup(tile);
+        tile.element.addEventListener('drag', (e) => {
+            const moved = new Vector(tile.position, tile.element.position());
+            moveTileWithGroup(moved, tile.parent);
         });
-        tile.element.addEventListener('tile_finishdrag', (e) => testMatching(tile));
-        tiles.push(tile);
-        tile.group = group;
-        group.push(tile);
-        tileGroups.push(group);
+        tile.element.addEventListener('dragend', (e) => {
+            const moved = new Vector(tile.position, tile.element.position());
+            moveTileWithGroup(moved, tile.parent);
+            testMatching(tile);
+        });
+        grid.tiles.push(tile);
+        const group = new Group(tile);
+        grid.add(group);
     }
 }
 
-function moveTileWithGroup(tile) {
-    const x = parseInt(tile.element.style.left);
-    const y = parseInt(tile.element.style.top);
-    const shiftX = x - tile.position.x;
-    const shiftY = y - tile.position.y;
-    for (let i = 0; i < tile.group.length; i++) {
-        const current = tile.group[i];
-        current.position.x += shiftX;
-        current.position.y += shiftY;
-        redrawTile(current);
-    }
+function moveTileWithGroup(vector, group) {
+    group.elements.forEach(item => item.move = vector);
+    group.elements.forEach(redrawTile);
 }
 
-function testMatching() {
-    let moved = false;
-    let matched = 0;
-    for (let i = 0; i < tiles.length; i++) {
-        const tile = tiles[i];
-        if (hasLeft(tile.j)) {
-            const left = tiles[tile.index - 1];
-            if (left.group !== tile.group) {
-                const distance = tile.position.distance(new Point(left.position.x + TILE_SIZE, left.position.y));
-                if (distance <= tolerance) {
-                    if (distance > 0) {
-                        left.position.x = tile.position.x - TILE_SIZE;
-                        left.position.y = tile.position.y;
-                        redrawTile(left);
-                        moved = true;
-                    }
-                    console.log('left match');
-                    changeGroup(left, tile);
-                    matched++;
-                }
+function testMatching(tile) {
+    const checked = [];
+    const checking = [...tile.parent.elements];
+    while (checking.length > 0) {
+        const current = checking.shift();
+        checked.push(current);
+        const index = current.index;
+        const row = Math.floor(index / COLS);
+        const col = index % COLS;
+        if (hasTop(row)) {
+            const top = grid.tiles[getTop(index, COLS)];
+            if (checking.indexOf(top) >= 0 || checked.indexOf(top) > 0) {
+                continue;
+            }
+            const distance = new Vector(top.bottomLeft, current.position);
+            const length = distance.length();
+            if (length <= TOLERANCE) {
+                moveTileWithGroup(distance, top.parent);
+                checking.push(...top.parent.elements);
+                tile.parent.merge(top.parent);
             }
         }
-        if (hasTop(tile.i)) {
-            const top = tiles[getTop(tile.index, COLS)];
-            if (top.group !== tile.group) {
-                const distance = tile.position.distance(new Point(top.position.x, top.position.y + TILE_SIZE));
-                if (distance <= tolerance) {
-                    if (distance > 0) {
-                        top.position.x = tile.position.x;
-                        top.position.y = tile.position.y - TILE_SIZE;
-                        redrawTile(top);
-                        moved = true;
-                    }
-                    console.log('top match');
-                    changeGroup(top, tile);
-                    matched++;
-                }
-            }
-        }
-    }
-    console.log(`matched ${matched}`);
-    if (moved) {
-        testMatching();
-    } else if (tileGroups.length === 1) {
-        setTimeout(() => alert('puzzle assembled'), 1);
     }
 }
 
 function redrawTile(tile) {
     tile.element.style.left = `${tile.position.x}px`;
     tile.element.style.top = `${tile.position.y}px`;
-}
-
-function changeGroup(from, to) {
-    to.group.push(from);
-    from.group.splice(from.group.indexOf(from), 1);
-    // delete empty group
-    if (from.group.length < 1) {
-        tileGroups.splice(tileGroups.indexOf(from.group), 1);
-    }
-    from.group = to.group;
 }
 
 function hasTop(row) {
@@ -209,16 +231,6 @@ function getTop(index, cols) {
 function getBottom(index, cols) {
     return index + cols;
 }
-/**
- * Distance between two coords
- * @param {int} x1 
- * @param {int} y1 
- * @param {int} x2 
- * @param {int} y2 
- */
-function length(x1, y1, x2, y2) {
-    return Math.abs(Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)));
-}
 
 function drawTile(tile) {
     const element = document.createElement('ul');
@@ -231,11 +243,16 @@ function drawTile(tile) {
     tileContent += `<li class="puzzle__tile-label puzzle__tile-label_right">${tile.right}</li>`;
     tileContent += `<li class="puzzle__tile-label puzzle__tile-label_bottom">${tile.bottom}</li>`;
     element.innerHTML = tileContent;
+    element.position = function() {
+        const x = parseInt(element.style.left);
+        const y = parseInt(element.style.top);
+        return new Point(x, y);
+    }
     return element;
 }
-tiles.map(tile => puzzleElement.append(tile.element));
 
-document.querySelector('#puzzle').append(puzzle.element);
+grid.tiles.forEach(tile => puzzleElement.append(tile.element));
+document.querySelector('#puzzle').append(puzzleElement);
 
 let isDragging = false;
 function mouseOverTile(event){
@@ -267,7 +284,7 @@ document.addEventListener('mousedown', function (event) {
     };
 
     function onMouseMove(event) {
-        moveAt(event.clientX, event.clientY);
+        moveTo(event.clientX, event.clientY);
     }
 
     // on drag start:
@@ -287,8 +304,9 @@ document.addEventListener('mousedown', function (event) {
         shiftY = clientY - element.getBoundingClientRect().top;
 
         element.style.position = 'fixed';
-
-        moveAt(clientX, clientY);
+        
+        element.dispatchEvent(new Event('dragstart'));
+        moveTo(clientX, clientY);
     };
 
     // switch to absolute coordinates at the end, to fix the element in the document
@@ -304,10 +322,10 @@ document.addEventListener('mousedown', function (event) {
 
         document.removeEventListener('mousemove', onMouseMove);
         dragElement.removeEventListener('mouseup', onMouseUp);
-        dragElement.dispatchEvent(new Event('tile_finishdrag'));
+        dragElement.dispatchEvent(new Event('dragend'));
     }
 
-    function moveAt(clientX, clientY) {
+    function moveTo(clientX, clientY) {
         // new window-relative coordinates
         let newX = clientX - shiftX;
         let newY = clientY - shiftY;
@@ -348,7 +366,6 @@ document.addEventListener('mousedown', function (event) {
             newY = Math.max(newY, 0); // newY may not be below 0
         }
 
-
         // limit the new X within the window boundaries
         // there's no scroll here so it's simple
         if (newX < 0) newX = 0;
@@ -356,9 +373,10 @@ document.addEventListener('mousedown', function (event) {
             newX = document.documentElement.clientWidth - dragElement.offsetWidth;
         }
 
-        dragElement.style.left = newX + 'px';
-        dragElement.style.top = newY + 'px';
-        dragElement.dispatchEvent(new Event('tile_drag'));
+        dragElement.style.left = `${newX}px`;
+        dragElement.style.top = `${newY}px`;
+        dragElement.dispatchEvent(new Event('drag'));
     }
-
 });
+
+window.grid = grid;
