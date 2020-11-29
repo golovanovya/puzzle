@@ -9,19 +9,31 @@ const SIDE_TYPES = {
 
 class Point {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
+        this._x = x;
+        this._y = y;
+    }
+
+    get x() {
+        return this._x;
+    }
+
+    get y() {
+        return this._y;
     }
 
     distanceTo(point) {
         return new Vector(this, point).length();
     }
+
+    static clone() {
+        new Point(this.x, this.y);
+    }
 }
 
 class Vector {
     constructor(start, end) {
-        this.start = start;
-        this.end = end;
+        this.start = new Point(start.x, start.y);
+        this.end = new Point(end.x, end.y);
     }
 
     get x() {
@@ -85,8 +97,7 @@ class Tile extends Element {
     }
 
     set move(vector) {
-        this.position.x += vector.x;
-        this.position.y += vector.y;
+        this.position = new Point(this.position.x + vector.x, this.position.y + vector.y);
     }
 
     get topLeft() {
@@ -193,16 +204,42 @@ function testMatching(tile) {
         const row = Math.floor(index / COLS);
         const col = index % COLS;
         if (hasTop(row)) {
-            const top = grid.tiles[getTop(index, COLS)];
-            if (checking.indexOf(top) >= 0 || checked.indexOf(top) > 0) {
+            const adjacent = grid.tiles[getTop(index, COLS)];
+            if (checked.indexOf(adjacent) > 0) {
                 continue;
             }
-            const distance = new Vector(top.bottomLeft, current.position);
+            const distance = new Vector(adjacent.bottomLeft, current.position);
             const length = distance.length();
             if (length <= TOLERANCE) {
-                moveTileWithGroup(distance, top.parent);
-                checking.push(...top.parent.elements);
-                tile.parent.merge(top.parent);
+                moveTileWithGroup(distance, adjacent.parent);
+                checking.push(...adjacent.parent.elements);
+                tile.parent.merge(adjacent.parent);
+            }
+        }
+        // if (hasLeft(col)) {
+        //     const adjacent = grid.tiles[index - 1];
+        //     if (checked.indexOf(adjacent) > 0) {
+        //         continue;
+        //     }
+        //     const distance = new Vector(adjacent.topRight, current.position);
+        //     const length = distance.length();
+        //     if (length <= TOLERANCE) {
+        //         moveTileWithGroup(distance, adjacent.parent);
+        //         checking.push(...adjacent.parent.elements);
+        //         tile.parent.merge(adjacent.parent);
+        //     }
+        // }
+        if (hasRight(col, COLS)) {
+            const adjacent = grid.tiles[index + 1];
+            if (checked.indexOf(adjacent) > 0) {
+                continue;
+            }
+            const distance = new Vector(adjacent.position, current.topRight);
+            const length = distance.length();
+            if (length <= TOLERANCE) {
+                moveTileWithGroup(distance, adjacent.parent);
+                checking.push(...adjacent.parent.elements);
+                tile.parent.merge(adjacent.parent);
             }
         }
     }
