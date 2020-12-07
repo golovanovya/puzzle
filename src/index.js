@@ -1,10 +1,32 @@
 'use strict';
 import './style.css';
+import './canvas';
+import {drawCurve} from './canvas.js';
+import Konva from 'konva';
 
 const SIDE_TYPES = {
     VALLEY: -1,
     FLAT: 0,
     MOUNTED: 1
+};
+
+const WIDTH = 1000;
+const HEIGHT = 1000;
+
+// then create layer
+const stage = new Konva.Stage({
+    container: 'container', // id of container <div>
+    width: WIDTH,
+    height: HEIGHT
+});
+const layer = new Konva.Layer();
+// add the layer to the stage
+stage.add(layer);
+
+const image = new Image();
+image.src = 'https://img.fonwall.ru/o/vb/pole-derevo-vozdushnyy-shar-popugay.jpg?route=mid&amp;h=750';
+image.onload = () => {
+    layer.draw();
 };
 
 class Point {
@@ -27,6 +49,14 @@ class Point {
 
     static clone() {
         new Point(this.x, this.y);
+    }
+
+    x() {
+        return this.x;
+    }
+
+    y() {
+        return this.y;
     }
 }
 
@@ -160,11 +190,18 @@ puzzleElement.className = 'puzzle';
 
 const grid = new Grid();
 
+function getRandomArbitrary(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min; //Максимум не включается, минимум включается
+}
+
 for (let i = 0; i < ROWS; i++) {
     for (let j = 0; j < COLS; j++) {
         const index = (i * COLS) + j;
+        // const position = new Point(getRandomArbitrary(0, WIDTH - TILE_SIZE), getRandomArbitrary(0, HEIGHT - TILE_SIZE));
         const position = new Point(j * TILE_SIZE + j * 50, i * TILE_SIZE + i * 50);
-        const top = hasTop(i) ? grid.tiles[getTop(index, COLS)].bottom * -1 : SIDE_TYPES.FLAT;
+        const top = hasTop(i) ? grid.tiles[getTopIndex(index, COLS)].bottom * -1 : SIDE_TYPES.FLAT;
         const right = hasRight(j, COLS) ? getRandomSide() : SIDE_TYPES.FLAT;
         const bottom = hasBottom(i, ROWS) ? getRandomSide() : SIDE_TYPES.FLAT;
         const left = hasLeft(j) ?  grid.tiles[index - 1].right * -1 : SIDE_TYPES.FLAT;
@@ -173,13 +210,13 @@ for (let i = 0; i < ROWS; i++) {
         tile.i = i;
         tile.j = j;
         tile.element = drawTile(tile);
-        tile.element.addEventListener('mouseover', mouseOverTile);
-        tile.element.addEventListener('drag', (e) => {
-            const moved = new Vector(tile.position, tile.element.position());
+        // tile.element.addEventListener('mouseover', mouseOverTile);
+        tile.element.addEventListener('dragmove', (e) => {
+            const moved = new Vector(tile.position, new Point(tile.element.x(), tile.element.y()));
             moveTileWithGroup(moved, tile.parent);
         });
         tile.element.addEventListener('dragend', (e) => {
-            const moved = new Vector(tile.position, tile.element.position());
+            const moved = new Vector(tile.position, new Point(tile.element.x(), tile.element.y()));
             moveTileWithGroup(moved, tile.parent);
             testMatching(tile);
         });
@@ -192,8 +229,11 @@ for (let i = 0; i < ROWS; i++) {
 function moveTileWithGroup(vector, group) {
     group.elements.forEach(item => item.move = vector);
     group.elements.forEach(redrawTile);
+    layer.draw();
 }
 
+const has = tile => element => element.index === tile.index;
+ 
 function testMatching(tile) {
     const checked = [];
     const checking = [...tile.parent.elements];
@@ -204,8 +244,8 @@ function testMatching(tile) {
         const row = Math.floor(index / COLS);
         const col = index % COLS;
         if (hasTop(row)) {
-            const adjacent = grid.tiles[getTop(index, COLS)];
-            if (checked.indexOf(adjacent) > 0) {
+            const adjacent = grid.tiles[getTopIndex(index, COLS)];
+            if (checked.some(has(adjacent))) {
                 continue;
             }
             const distance = new Vector(adjacent.bottomLeft, current.position);
@@ -213,25 +253,12 @@ function testMatching(tile) {
             if (length <= TOLERANCE) {
                 moveTileWithGroup(distance, adjacent.parent);
                 checking.push(...adjacent.parent.elements);
-                tile.parent.merge(adjacent.parent);
+                current.parent.merge(adjacent.parent);
             }
         }
-        // if (hasLeft(col)) {
-        //     const adjacent = grid.tiles[index - 1];
-        //     if (checked.indexOf(adjacent) > 0) {
-        //         continue;
-        //     }
-        //     const distance = new Vector(adjacent.topRight, current.position);
-        //     const length = distance.length();
-        //     if (length <= TOLERANCE) {
-        //         moveTileWithGroup(distance, adjacent.parent);
-        //         checking.push(...adjacent.parent.elements);
-        //         tile.parent.merge(adjacent.parent);
-        //     }
-        // }
         if (hasRight(col, COLS)) {
             const adjacent = grid.tiles[index + 1];
-            if (checked.indexOf(adjacent) > 0) {
+            if (checked.some(has(adjacent))) {
                 continue;
             }
             const distance = new Vector(adjacent.position, current.topRight);
@@ -239,15 +266,51 @@ function testMatching(tile) {
             if (length <= TOLERANCE) {
                 moveTileWithGroup(distance, adjacent.parent);
                 checking.push(...adjacent.parent.elements);
-                tile.parent.merge(adjacent.parent);
+                current.parent.merge(adjacent.parent);
             }
+            // console.log(tile);
         }
+        // if (hasLeft(col, COLS)) {
+        //     const adjacent = grid.tiles[index - 1];
+        //     if (checked.some(has(adjacent))) {
+        //         continue;
+        //     }
+        //     const distance = new Vector(adjacent.topRight, current.position);
+        //     const length = distance.length();
+        //     if (length <= TOLERANCE) {
+        //         moveTileWithGroup(distance, adjacent.parent);
+        //         checking.push(...adjacent.parent.elements);
+        //         current.parent.merge(adjacent.parent);
+        //     }
+        //     // console.log(tile);
+        // }
+        // if (hasBottom(row)) {
+        //     const adjacent = grid.tiles[getBottomIndex(index, COLS)];
+        //     if (checked.some(has(adjacent))) {
+        //         continue;
+        //     }
+        //     const distance = new Vector(adjacent.position, current.bottomLeft);
+        //     const length = distance.length();
+        //     if (length <= TOLERANCE) {
+        //         moveTileWithGroup(distance, adjacent.parent);
+        //         checking.push(...adjacent.parent.elements);
+        //         tile.parent.merge(adjacent.parent);
+        //     }
+        // }
+    }
+    layer.draw();
+    testFinish(tile);
+}
+
+function testFinish(tile) {
+    if (tile.parent.elements.length === grid.tiles.length) {
+        grid.tiles.forEach(tile => tile.element.draggable(false));
+        setTimeout(() => alert('congrat'), 50);
     }
 }
 
 function redrawTile(tile) {
-    tile.element.style.left = `${tile.position.x}px`;
-    tile.element.style.top = `${tile.position.y}px`;
+    tile.element.position(tile.position);
 }
 
 function hasTop(row) {
@@ -262,36 +325,37 @@ function hasBottom(row, rows) {
 function hasLeft(col) {
     return col !== 0;
 }
-function getTop(index, cols) {
+function getTopIndex(index, cols) {
     return index - cols;
 }
-function getBottom(index, cols) {
+function getBottomIndex(index, cols) {
     return index + cols;
 }
 
 function drawTile(tile) {
-    const element = document.createElement('ul');
-    element.className = 'puzzle__tile draggable';
-    element.style = `top:${tile.position.y}px;left:${tile.position.x}px`;
-    let tileContent = '';
-    tileContent += `<li class="puzzle__tile-label puzzle__tile-label_top">${tile.top}</li>`;
-    tileContent += `<li class="puzzle__tile-label puzzle__tile-label_left">${tile.left}</li>`;
-    tileContent += `<li class="puzzle__tile-label puzzle__tile-label">${tile.index}</li>`;
-    tileContent += `<li class="puzzle__tile-label puzzle__tile-label_right">${tile.right}</li>`;
-    tileContent += `<li class="puzzle__tile-label puzzle__tile-label_bottom">${tile.bottom}</li>`;
-    element.innerHTML = tileContent;
-    element.position = function() {
-        const x = parseInt(element.style.left);
-        const y = parseInt(element.style.top);
-        return new Point(x, y);
-    }
+    const index = tile.index;
+    const row = Math.floor(index / COLS);
+    const col = index % COLS;
+    const linePoints = drawCurve(tile);
+    const element = new Konva.Line({
+        strokeWidth: 0,
+        stroke: 'black',
+        fillPatternImage: image,
+        fillPatternOffsetX: col * tile.width + 700,
+        fillPatternOffsetY: row * tile.height + 200,
+        strokeEnabled: false,
+        id: 'bezierLine',
+        points: linePoints,
+        bezier: true,
+        closed: true,
+        draggable: true,
+        position: tile.position
+    });
+    layer.add(element);
+    layer.draw();
     return element;
 }
 
-grid.tiles.forEach(tile => puzzleElement.append(tile.element));
-document.querySelector('#puzzle').append(puzzleElement);
-
-let isDragging = false;
 function mouseOverTile(event){
     if (isDragging) return false;
     let dragElement = event.target.closest('.draggable');
@@ -304,116 +368,5 @@ function mouseOverTile(event){
     return false;
 }
 
-document.addEventListener('mousedown', function (event) {
-    let dragElement = event.target.closest('.draggable');
-    if (!dragElement) return;
-
-    event.preventDefault();
-    dragElement.ondragstart = function () {
-        return false;
-    };
-
-    let coords, shiftX, shiftY;
-    startDrag(dragElement, event.clientX, event.clientY);
-
-    function onMouseUp(event) {
-        finishDrag();
-    };
-
-    function onMouseMove(event) {
-        moveTo(event.clientX, event.clientY);
-    }
-
-    // on drag start:
-    //   remember the initial shift
-    //   move the element position:fixed and a direct child of body
-    function startDrag(element, clientX, clientY) {
-        if (isDragging) {
-            return;
-        }
-
-        isDragging = true;
-
-        document.addEventListener('mousemove', onMouseMove);
-        element.addEventListener('mouseup', onMouseUp);
-
-        shiftX = clientX - element.getBoundingClientRect().left;
-        shiftY = clientY - element.getBoundingClientRect().top;
-
-        element.style.position = 'fixed';
-        
-        element.dispatchEvent(new Event('dragstart'));
-        moveTo(clientX, clientY);
-    };
-
-    // switch to absolute coordinates at the end, to fix the element in the document
-    function finishDrag() {
-        if (!isDragging) {
-            return;
-        }
-
-        isDragging = false;
-
-        dragElement.style.top = parseInt(dragElement.style.top) + pageYOffset + 'px';
-        dragElement.style.position = 'absolute';
-
-        document.removeEventListener('mousemove', onMouseMove);
-        dragElement.removeEventListener('mouseup', onMouseUp);
-        dragElement.dispatchEvent(new Event('dragend'));
-    }
-
-    function moveTo(clientX, clientY) {
-        // new window-relative coordinates
-        let newX = clientX - shiftX;
-        let newY = clientY - shiftY;
-
-        // check if the new coordinates are below the bottom window edge
-        let newBottom = newY + dragElement.offsetHeight; // new bottom
-
-        // below the window? let's scroll the page
-        if (newBottom > document.documentElement.clientHeight) {
-            // window-relative coordinate of document end
-            let docBottom = document.documentElement.getBoundingClientRect().bottom;
-
-            // scroll the document down by 10px has a problem
-            // it can scroll beyond the end of the document
-            // Math.min(how much left to the end, 10)
-            let scrollY = Math.min(docBottom - newBottom, 10);
-
-            // calculations are imprecise, there may be rounding errors that lead to scrolling up
-            // that should be impossible, fix that here
-            if (scrollY < 0) scrollY = 0;
-
-            window.scrollBy(0, scrollY);
-
-            // a swift mouse move make put the cursor beyond the document end
-            // if that happens -
-            // limit the new Y by the maximally possible (right at the bottom of the document)
-            newY = Math.min(newY, document.documentElement.clientHeight - dragElement.offsetHeight);
-        }
-
-        // check if the new coordinates are above the top window edge (similar logic)
-        if (newY < 0) {
-            // scroll up
-            let scrollY = Math.min(-newY, 10);
-            if (scrollY < 0) scrollY = 0; // check precision errors
-
-            window.scrollBy(0, -scrollY);
-            // a swift mouse move can put the cursor beyond the document start
-            newY = Math.max(newY, 0); // newY may not be below 0
-        }
-
-        // limit the new X within the window boundaries
-        // there's no scroll here so it's simple
-        if (newX < 0) newX = 0;
-        if (newX > document.documentElement.clientWidth - dragElement.offsetWidth) {
-            newX = document.documentElement.clientWidth - dragElement.offsetWidth;
-        }
-
-        dragElement.style.left = `${newX}px`;
-        dragElement.style.top = `${newY}px`;
-        dragElement.dispatchEvent(new Event('drag'));
-    }
-});
-
 window.grid = grid;
+window.layer = layer;

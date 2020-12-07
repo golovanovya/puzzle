@@ -1,43 +1,36 @@
 import Konva from 'konva';
 
-function drawCurve(mode) {
-    const bezierPoints = [
-        0, 0, 35, 15, 37, 5,
-        37, 5, 40, 0, 38, -5,
-        38, -5, 20, -20, 50, -20,
-        50, -20, 80, -20, 62, -5,
-        62, -5, 60, 0, 63, 5,
-        63, 5, 65, 15, 100, 0,
-        100, 0
-    ];
-    const shiftX = 0;
-    const shiftY = 0;
-    const tileWidth = 100;
-    const tileHeight = 100;
-    const lineTop = (point, index) => index % 2 === 0 ? point + shiftX : point * FLAT + shiftY;
-    const lineRigth = bezierPoints.slice(0).reduce((r, e, i) => {
-        if (i % 2 !== 0) {
-            const prev = r.pop();
-            r = [...r, e + shiftX + tileWidth, prev + shiftY];
-        } else {
-            r = [...r, e];
-        }
-        return r;
-    }, []);
-    const bottom = bezierPoints.slice(0)
-        .reverse()
-        .map((point, index) => index % 2 === 0 ? point * -mode + shiftX + tileHeight : point + shiftY)
-        .reduce((r, e, i) => {
-            if (i % 2 !== 0) {
-                const prev = r.pop();
-                r = [...r, e, prev];
-            } else {
-                r = [...r, e];
-            }
-            return r;
-        }, []);
+const MOUNTED = 1;
+const FLAT = 0;
+const VALLEY = -1;
 
-    return [...bezierPoints.slice(0).map(lineTop), ...lineRigth, ...bottom, ...bezierPoints.slice(0).map(lineTop).reverse()];
+const bezierPoints = [
+    0, 0, 35, 15, 37, 5,
+    37, 5, 40, 0, 38, -5,
+    38, -5, 20, -20, 50, -20,
+    50, -20, 80, -20, 62, -5,
+    62, -5, 60, 0, 63, 5,
+    63, 5, 65, 15, 100, 0,
+    100, 0
+];
+
+function drawCurve(tile) {
+    const tileWidth = tile.width;
+    const tileHeight = tile.height;
+    const top = bezierPoints
+        .map((point, index) => index & 1 ? point * tile.top : point); // curve
+    const right = bezierPoints
+        .map((point, index) => index & 1 ? point * -tile.right : point) // curve
+        .map((point, index) => index & 1 ? point + tileWidth : point) // shift
+        .map((e, i, a) => i & 1 ? a[i - 1] : a[i + 1]); // rotate
+    const bottom = bezierPoints
+        .map((point, index) => index & 1 ? point * -tile.bottom : point) // curve
+        .map((point, index) => index & 1 ? point + tileHeight : point) // shift
+        .reverse().map((e, i, a) => i & 1 ? a[i - 1] : a[i + 1]); //rotate
+    const left = bezierPoints
+        .map((point, index) => index & 1 ? point * tile.left : point) // curve
+        .reverse(); // rotate
+    return [...top, ...right, ...bottom, ...left];
 
 }
 
@@ -81,7 +74,7 @@ function init() {
     // draw the image
     layer.draw();
 }
-init();
+// init();
 
 function generateTiles(width, height, tileWidth, tileHeight) {
     const lengthX = Math.floor(width / tileWidth);
@@ -117,3 +110,5 @@ function generateTiles(width, height, tileWidth, tileHeight) {
         }
     }
 }
+
+export {drawCurve};
