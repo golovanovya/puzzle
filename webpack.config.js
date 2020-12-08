@@ -6,30 +6,15 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require('webpack');
 
 module.exports = {
-    // context: path.resolve(__dirname),
-    entry: {
-        vendor: [
-            'jquery',
-            'bootstrap/dist/css/bootstrap.min.css',
-            'bootstrap',
-            'konva'
-        ],
-        bundle: './src/index.js'
-    },
+    entry: './src/index.js',
     plugins: [
-        // new CleanWebpuckPlugin(['dist']),
+        new MiniCssExtractPlugin(),
+        new CleanWebpuckPlugin(['dist']),
         new HtmlWebpackPlugin({
             title: 'Puzzle HTML 5',
-            // hash: true,
+            hash: true,
             template: './src/index.html'
         }),
-        // new MiniCssExtractPlugin({
-        //     // Options similar to the same options in webpackOptions.output
-        //     // both options are optional
-        //     filename: "[name].css",
-        //     chunkFilename: "[id].css"
-        // }),
-        // new webpack.HashedModuleIdsPlugin(),
         new webpack.HotModuleReplacementPlugin()
     ],
     output: {
@@ -48,11 +33,11 @@ module.exports = {
                 test: /\.m?js$/,
                 exclude: /(node_modules|bower_components)/,
                 use: {
-                  loader: 'babel-loader',
-                  options: {
-                    presets: ['@babel/preset-env'],
-                    plugins: [require('@babel/plugin-proposal-object-rest-spread')]
-                  }
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env'],
+                        plugins: [require('@babel/plugin-proposal-object-rest-spread')]
+                    }
                 }
             },
             {
@@ -60,26 +45,13 @@ module.exports = {
                 use: [
                     'css-hot-loader',
                     'style-loader',
-                    // MiniCssExtractPlugin.loader,
+                    MiniCssExtractPlugin.loader,
                     'css-loader'
                 ]
             }
         ]
     },
     watchOptions: {
-        aggregateTimeout: 300,
-        poll: 300 // Check for changes every second
+        aggregateTimeout: 300
     },
-    optimization: {
-        runtimeChunk: 'single',
-        splitChunks: {
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all'
-            }
-          }
-        }
-    }
 }

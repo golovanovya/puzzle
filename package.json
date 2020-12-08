@@ -4,9 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "dev": "webpack --mode development",
-    "watch": "webpack --watch --mode development",
-    "start": "webpack-dev-server --open",
+    "start": "webpack-dev-server --open --mode development",
     "build": "webpack --mode production",
     "test": "mocha"
   },
