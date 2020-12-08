@@ -65,15 +65,24 @@ for (let i = 0; i < ROWS; i++) {
         tile.i = i;
         tile.j = j;
         tile.element = drawTile(tile);
-        // tile.element.addEventListener('mouseover', mouseOverTile);
+        tile.element.addEventListener('mouseover', () => {
+            tile.parent.elements.forEach(({element}) => element.moveToTop());
+            layer.draw();
+        });
         tile.element.addEventListener('dragmove', (e) => {
+            tile.parent.elements.forEach(({element}) => element.moveToTop());
             const moved = new Vector(tile.position, new Point(tile.element.x(), tile.element.y()));
             moveTileWithGroup(moved, tile.parent);
         });
         tile.element.addEventListener('dragend', (e) => {
             const moved = new Vector(tile.position, new Point(tile.element.x(), tile.element.y()));
             moveTileWithGroup(moved, tile.parent);
-            testMatching(tile);
+            const hasMatch = testMatching(tile);
+            if (hasMatch) {
+                tile.parent.elements.forEach(({element}) => element.moveToBottom());
+            }
+            layer.draw();
+            testFinish(tile);
         });
         grid.tiles.push(tile);
         const group = new Group(tile);
@@ -94,6 +103,7 @@ const has = tile => element => element.index === tile.index;
 function testMatching(tile) {
     const checked = [];
     const checking = [...tile.parent.elements];
+    let matched = false;
     while (checking.length > 0) {
         const current = checking.shift();
         checked.push(current);
@@ -109,6 +119,7 @@ function testMatching(tile) {
                     moveTileWithGroup(distance, adjacent.parent);
                     checking.push(...adjacent.parent.elements);
                     current.parent.merge(adjacent.parent);
+                    matched = true;
                 }
             }
         }
@@ -122,6 +133,7 @@ function testMatching(tile) {
                     moveTileWithGroup(distance, adjacent.parent);
                     checking.push(...adjacent.parent.elements);
                     current.parent.merge(adjacent.parent);
+                    matched = true;
                 }
             }
         }
@@ -135,6 +147,7 @@ function testMatching(tile) {
                     moveTileWithGroup(distance, adjacent.parent);
                     checking.push(...adjacent.parent.elements);
                     current.parent.merge(adjacent.parent);
+                    matched = true;
                 }
             }
         }
@@ -148,13 +161,13 @@ function testMatching(tile) {
                     moveTileWithGroup(distance, adjacent.parent);
                     checking.push(...adjacent.parent.elements);
                     current.parent.merge(adjacent.parent);
+                    matched = true;
                 }
             }
         }
 
     }
-    layer.draw();
-    testFinish(tile);
+    return matched;
 }
 
 function testFinish(tile) {
@@ -193,12 +206,12 @@ function drawTile(tile) {
     const col = index % COLS;
     const linePoints = drawCurve(tile);
     const element = new Konva.Line({
-        strokeWidth: 0,
-        stroke: 'black',
+        stroke: 'orange',
+        strokeWidth: 1,
         fillPatternImage: image,
         fillPatternOffsetX: col * tile.width + 700,
         fillPatternOffsetY: row * tile.height + 200,
-        strokeEnabled: false,
+        strokeEnabled: true,
         id: 'bezierLine',
         points: linePoints,
         bezier: true,
@@ -209,18 +222,6 @@ function drawTile(tile) {
     layer.add(element);
     layer.draw();
     return element;
-}
-
-function mouseOverTile(event){
-    if (isDragging) return false;
-    let dragElement = event.target.closest('.draggable');
-    if (!dragElement) return;
-    if (typeof dragElement.parentElement === 'undefined') return;
-    const parent = dragElement.parentElement;
-
-    parent.removeChild(dragElement);
-    parent.append(dragElement);
-    return false;
 }
 
 window.grid = grid;
