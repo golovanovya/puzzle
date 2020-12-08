@@ -1,8 +1,11 @@
 'use strict';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap';
+
 import './style.css';
-import './canvas';
-import {drawCurve} from './canvas.js';
+import {drawCurve} from './canvas';
 import Konva from 'konva';
+
 const {Point, Vector, Tile, Group, Grid} = require('./primitives');
 
 const SIDE_TYPES = {
@@ -206,12 +209,10 @@ function drawTile(tile) {
     const col = index % COLS;
     const linePoints = drawCurve(tile);
     const element = new Konva.Line({
-        stroke: 'orange',
-        strokeWidth: 1,
         fillPatternImage: image,
         fillPatternOffsetX: col * tile.width + 700,
         fillPatternOffsetY: row * tile.height + 200,
-        strokeEnabled: true,
+        strokeEnabled: false,
         id: 'bezierLine',
         points: linePoints,
         bezier: true,
