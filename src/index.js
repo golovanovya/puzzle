@@ -11,8 +11,13 @@ const SIDE_TYPES = {
     MOUNTED: 1
 };
 
-const WIDTH = 1000;
-const HEIGHT = 1000;
+const COLS = 3;
+const ROWS = 3;
+const TILE_SIZE = 100;
+const TOLERANCE = 20;
+
+const WIDTH = (TILE_SIZE + TOLERANCE * 2) * COLS;
+const HEIGHT = (TILE_SIZE + TOLERANCE * 2) * ROWS;
 
 // then create layer
 const stage = new Konva.Stage({
@@ -35,11 +40,6 @@ function getRandomSide() {
     return rand === 0 ? SIDE_TYPES.MOUNTED : SIDE_TYPES.VALLEY;
 }
 
-const COLS = 3;
-const ROWS = 3;
-const TILE_SIZE = 100;
-const TOLERANCE = 20;
-
 const puzzleElement = document.createElement('div');
 puzzleElement.className = 'puzzle';
 
@@ -54,7 +54,7 @@ function getRandomArbitrary(min, max) {
 for (let i = 0; i < ROWS; i++) {
     for (let j = 0; j < COLS; j++) {
         const index = (i * COLS) + j;
-        // const position = new Point(getRandomArbitrary(0, WIDTH - TILE_SIZE), getRandomArbitrary(0, HEIGHT - TILE_SIZE));
+        // const position = new Point(getRandomArbitrary(0, Math.min(WIDTH - TILE_SIZE, TILE_SIZE * COLS)), getRandomArbitrary(0, Math.min(HEIGHT - TILE_SIZE, TILE_SIZE * ROWS)));
         const position = new Point(j * TILE_SIZE + j * 50, i * TILE_SIZE + i * 50);
         const top = hasTop(i) ? grid.tiles[getTopIndex(index, COLS)].bottom * -1 : SIDE_TYPES.FLAT;
         const right = hasRight(j, COLS) ? getRandomSide() : SIDE_TYPES.FLAT;
@@ -160,7 +160,7 @@ function testMatching(tile) {
 function testFinish(tile) {
     if (tile.parent.elements.length === grid.tiles.length) {
         grid.tiles.forEach(tile => tile.element.draggable(false));
-        setTimeout(() => alert('congrat'), 50);
+        setTimeout(() => alert('Congrats!'), 50);
     }
 }
 
