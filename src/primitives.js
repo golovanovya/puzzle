@@ -1,3 +1,9 @@
+const SIDE_TYPES = {
+    VALLEY: -1,
+    FLAT: 0,
+    MOUNTED: 1
+};
+
 class Point {
     constructor(x, y) {
         this._x = x;
@@ -116,11 +122,23 @@ class Tile extends Element {
     get topRight() {
         return new Point(this.position.x + this.width, this.position.y);
     }
+    get bottomRight() {
+        return new Point(this.position.x + this.width, this.position.y + this.height);
+    }
     get bottomLeft() {
         return new Point(this.position.x, this.position.y + this.height);
     }
-    get topLeft() {
-        return new Point(this.position.x + this.width, this.position.y + this.height);
+
+    /**
+     * Sides start positions
+     */
+    get points() {
+        return [
+            this.topLeft,
+            this.topRight,
+            this.bottomRight,
+            this.bottomLeft
+        ];
     }
 
     get top() {
@@ -138,6 +156,22 @@ class Tile extends Element {
     get left() {
         return this.sides[3];
     }
+
+    get x() {
+        return this.position.x;
+    }
+
+    get y() {
+        return this.position.y;
+    }
+
+    set x(x) {
+        this.position = new Point(x, this.y);
+    }
+
+    set y(y) {
+        this.position = new Point(this.x, y);
+    }
 }
 
 class Group extends Element {
@@ -148,13 +182,4 @@ class Group extends Element {
     }
 }
 
-class Grid extends Element {
-    constructor() {
-        super();
-        this.tiles = [];
-    }
-}
-
-// export {Point, Vector, Element, Tile, Group, Grid};
-
-module.exports = {Point, Vector, Element, Tile, Group, Grid};
+module.exports = {SIDE_TYPES, Point, Vector, Element, Tile, Group};
