@@ -1,6 +1,7 @@
 const {Element, Tile, SIDE_TYPES, Point, Group, Vector} = require('./primitives');
 const {drawCurve} = require('./canvas');
 const utils = require('./utils');
+const Konva = require('konva');
 
 class Grid extends Element {
     constructor(params) {
@@ -99,7 +100,6 @@ class Grid extends Element {
     }
 
     _moveTileWithGroup(vector, group) {
-        const {layer} = this.params;
         group.elements.forEach(item => item.move = vector);
         group.elements.forEach(tile => tile.element.position(tile.position));
     }
@@ -144,19 +144,19 @@ class Grid extends Element {
     _buildTileShape(tile) {
         const linePoints = drawCurve(tile);
         const {col, row} = this._indexToGrid(tile.index);
+        const {layer} = this.params;
         const shape = new Konva.Line({
+            position: tile.position,
             strokeWidth: 0,
-            stroke: 'black',
+            strokeEnabled: false,
             fillPatternImage: this.params.image,
             fillPatternOffsetX: col * tile.width + 700,
             fillPatternOffsetY: row * tile.height + 200,
-            strokeEnabled: false,
-            id: 'bezierLine',
+            id: `tile${tile.index}`,
             points: linePoints,
             bezier: true,
             closed: true,
             draggable: true,
-            position: tile.position
         });
         return shape;
     }

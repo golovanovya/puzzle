@@ -5,7 +5,14 @@ const CleanWebpuckPlugin = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require('webpack');
 
+// @todo: remove this mode fix
+const yargs = require('yargs/yargs');
+const {hideBin} = require('yargs/helpers');
+const argv = yargs(hideBin(process.argv)).argv;
+const MODE = argv.mode || process.env.NODE_ENV || 'none';
+
 module.exports = {
+    mode: MODE,
     entry: './src/index.js',
     plugins: [
         new MiniCssExtractPlugin(),
@@ -22,7 +29,6 @@ module.exports = {
         pathinfo: true,
         filename: '[name].js'
     },
-    devtool: 'eval-source-map',
     devServer: {
         contentBase: './dist',
         hot: true
@@ -43,9 +49,7 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: [
-                    'css-hot-loader',
-                    'style-loader',
-                    MiniCssExtractPlugin.loader,
+                    MODE === 'development' ? 'style-loader' : MiniCssExtractPlugin.loader,
                     'css-loader'
                 ]
             }

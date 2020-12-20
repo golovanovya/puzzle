@@ -1,6 +1,4 @@
-'use strict';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap';
+const config = require('./config');
 
 import './style.css';
 import Konva from 'konva';
@@ -10,7 +8,6 @@ const COLS = 3;
 const ROWS = 3;
 const TILE_SIZE = 100;
 const TOLERANCE = 20;
-const RANDOM = false;
 
 const WIDTH = (TILE_SIZE + TOLERANCE * 2) * COLS;
 const HEIGHT = (TILE_SIZE + TOLERANCE * 2) * ROWS;
@@ -26,7 +23,7 @@ const layer = new Konva.Layer();
 stage.add(layer);
 
 const image = new Image();
-image.src = 'https://img.fonwall.ru/o/vb/pole-derevo-vozdushnyy-shar-popugay.jpg?route=mid&amp;h=750';
+image.src = config.defaultImage;
 image.onload = () => {
     layer.draw();
 };
@@ -36,7 +33,7 @@ const grid = new Grid({
     width: WIDTH,
     height: HEIGHT,
     layer,
-    random: RANDOM
+    random: config.mode !== 'development'
 });
 
 window.grid = grid;
