@@ -5,30 +5,23 @@ const CleanWebpuckPlugin = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require('webpack');
 
+// @todo: remove this mode fix
+const yargs = require('yargs/yargs');
+const {hideBin} = require('yargs/helpers');
+const argv = yargs(hideBin(process.argv)).argv;
+const MODE = argv.mode || process.env.NODE_ENV || 'none';
+
 module.exports = {
-    entry: {
-        vendor: [
-            'jquery',
-            'bootstrap/dist/css/bootstrap.min.css',
-            'bootstrap',
-            'konva'
-        ],
-        bundle: './src/index.js'
-    },
+    mode: MODE,
+    entry: './src/index.js',
     plugins: [
-        // new CleanWebpuckPlugin(['dist']),
+        new MiniCssExtractPlugin(),
+        new CleanWebpuckPlugin(['dist']),
         new HtmlWebpackPlugin({
             title: 'Puzzle HTML 5',
-            // hash: true,
+            hash: true,
             template: './src/index.html'
         }),
-        // new MiniCssExtractPlugin({
-        //     // Options similar to the same options in webpackOptions.output
-        //     // both options are optional
-        //     filename: "[name].css",
-        //     chunkFilename: "[id].css"
-        // }),
-        // new webpack.HashedModuleIdsPlugin(),
         new webpack.HotModuleReplacementPlugin()
     ],
     output: {
@@ -36,13 +29,9 @@ module.exports = {
         pathinfo: true,
         filename: '[name].js'
     },
-    devtool: 'eval',
     devServer: {
         contentBase: './dist',
-        hot: true,
-        host: '0.0.0.0',
-        openPage: 'http://127.0.0.1/',
-        port: 80
+        hot: true
     },
     module: {
         rules: [
@@ -50,38 +39,23 @@ module.exports = {
                 test: /\.m?js$/,
                 exclude: /(node_modules|bower_components)/,
                 use: {
-                  loader: 'babel-loader',
-                  options: {
-                    presets: ['@babel/preset-env'],
-                    plugins: [require('@babel/plugin-proposal-object-rest-spread')]
-                  }
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env'],
+                        plugins: [require('@babel/plugin-proposal-object-rest-spread')]
+                    }
                 }
             },
             {
                 test: /\.css$/,
                 use: [
-                    'css-hot-loader',
-                    'style-loader',
-                    // MiniCssExtractPlugin.loader,
+                    MODE === 'development' ? 'style-loader' : MiniCssExtractPlugin.loader,
                     'css-loader'
                 ]
             }
         ]
     },
     watchOptions: {
-        aggregateTimeout: 300,
-        poll: 300 // Check for changes every second
+        aggregateTimeout: 300
     },
-    optimization: {
-        runtimeChunk: 'single',
-        splitChunks: {
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all'
-            }
-          }
-        }
-    }
 }
