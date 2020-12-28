@@ -174,12 +174,4 @@ class Tile extends Element {
     }
 }
 
-class Group extends Element {
-    merge(group) {
-        if (this !== group) {
-            group.elements.slice().forEach(element => super.add(element));
-        }
-    }
-}
-
-module.exports = {SIDE_TYPES, Point, Vector, Element, Tile, Group};
+module.exports = {SIDE_TYPES, Point, Vector, Element, Tile};
