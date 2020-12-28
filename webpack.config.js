@@ -11,6 +11,7 @@ module.exports = (env, argv) => {
     return {
         mode: MODE,
         entry: './src/index.js',
+        devtool: MODE === 'development' ? 'eval-source-map' : undefined,
         plugins: [
             new MiniCssExtractPlugin(),
             new CssMinimizerPlugin(),
