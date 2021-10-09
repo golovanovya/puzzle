@@ -25,14 +25,6 @@ class Point {
     static clone() {
         new Point(this.x, this.y);
     }
-
-    x() {
-        return this.x;
-    }
-
-    y() {
-        return this.y;
-    }
 }
 
 const CURVED_LINE = [
