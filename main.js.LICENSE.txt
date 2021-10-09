@@ -1,0 +1,66 @@
+/*
+ * Konva JavaScript Framework v2.6.0
+ * http://konvajs.github.io/
+ * Licensed under the MIT
+ * Date: Fri Dec 14 2018
+ *
+ * Original work Copyright (C) 2011 - 2013 by Eric Rowell (KineticJS)
+ * Modified work Copyright (C) 2014 - present by Anton Lavrenov (Konva)
+ *
+ * @license
+ */
+
+/*! ./grid */
+
+/*! ./group */
+
+/*! ./primitives */
+
+/*! ./style.css */
+
+/*! ./utils */
+
+/*! konva */
+
+/*!*********************!*\
+  !*** ./src/grid.js ***!
+  \*********************/
+
+/*!**********************!*\
+  !*** ./src/group.js ***!
+  \**********************/
+
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+
+/*!**********************!*\
+  !*** ./src/utils.js ***!
+  \**********************/
+
+/*!***********************!*\
+  !*** ./src/style.css ***!
+  \***********************/
+
+/*!***************************!*\
+  !*** ./src/primitives.js ***!
+  \***************************/
+
+/*!*************************************!*\
+  !*** ./node_modules/konva/konva.js ***!
+  \*************************************/
+
+/**
+   * Sepia Filter
+   * Based on: Pixastic Lib - Sepia filter - v0.1.0
+   * Copyright (c) 2008 Jacob Seidelin, jseidelin@nihilogic.dk, http://blog.nihilogic.dk/
+   * @function
+   * @name Sepia
+   * @memberof Konva.Filters
+   * @param {Object} imageData
+   * @author Jacob Seidelin <jseidelin@nihilogic.dk>
+   * @license MPL v1.1 [http://www.pixastic.com/lib/license.txt]
+   * @example
+   * node.cache();
+   * node.filters([Konva.Filters.Sepia]);
+   */
