@@ -1,25 +1,28 @@
-const {Element, Tile, SIDE_TYPES, Point, Group, Vector} = require('./primitives');
-const {drawCurve} = require('./canvas');
+const {Element, Tile, SIDE_TYPES, Point, Vector, tilePath} = require('./primitives');
+const Group = require('./group');
 const utils = require('./utils');
 const Konva = require('konva');
+const DEFAULTS = {
+    cols: 3,
+    rows: 3,
+    tileWidth: 100,
+    tileHeight: 100,
+    display_min_width: 320,
+    canvas_height: 734,
+
+    image: null,
+    width: null,
+    height: null,
+    layer: null,
+    tolerance: 20,
+    random: true,
+}
 
 class Grid extends Element {
     constructor(params) {
         super();
-        const defaults = {
-            cols: 3,
-            rows: 3,
-            tileWidth: 100,
-            tileHeight: 100,
-            tolerance: 20,
-            randPosition: true,
-            image: null,
-            width: null,
-            height: null,
-            layer: null,
-            random: true
-        };
-        this.params = Object.assign({}, defaults, params);
+        
+        this.params = Object.assign({}, DEFAULTS, params);
         this.assembled = false;
         if (this.params.image === null) {
             throw new Error("image param is required");
@@ -42,26 +45,26 @@ class Grid extends Element {
     }
 
     _generateSides(row, col) {
-        const {cols} = this.params;
-        const top       = row     === 0        ? SIDE_TYPES.FLAT : this.tiles[row - 1][col].bottom * -1;
+        const {cols, rows} = this.params;
+        const top       = row     === 0        ? SIDE_TYPES.FLAT : this._tiles[row - 1][col].bottom * -1;
         const right     = col + 1 === cols     ? SIDE_TYPES.FLAT : this._getRandomSide();
-        const bottom    = row + 1 === cols     ? SIDE_TYPES.FLAT : this._getRandomSide();
-        const left      = col     === 0        ? SIDE_TYPES.FLAT : this.tiles[row][col - 1].right * -1;
+        const bottom    = row + 1 === rows     ? SIDE_TYPES.FLAT : this._getRandomSide();
+        const left      = col     === 0        ? SIDE_TYPES.FLAT : this._tiles[row][col - 1].right * -1;
         return [top, right, bottom, left];
     }
 
     _generatePosition(row, col) {
-        const {tileWidth, tileHeight, width, height, cols, rows, random} = this.params;
-        const x = random ? utils.rand(0, Math.min(width - tileWidth, tileWidth * cols)) : col * tileWidth + col * 50;
-        const y = random ? utils.rand(0, Math.min(height - tileHeight, tileHeight * rows)) : row * tileHeight + row * 50;
+        const {tileWidth, tileHeight, width, height, tolerance, random} = this.params;
+        const x = random ? utils.rand(0, width - tileWidth) : col * tileWidth + col * tolerance * 2;
+        const y = random ? utils.rand(0, height - tileHeight) : row * tileHeight + row * tolerance * 2;
         return new Point(x, y);
     }
 
     _generateTiles() {
-        this.tiles = [];
+        this._tiles = [];
         const {rows, cols, layer, tileWidth, tileHeight, random} = this.params;
         for (let i = 0; i < rows; i++) {
-            this.tiles[i] = [];
+            this._tiles[i] = [];
             for (let j = 0; j < cols; j++) {
                 const index = i * cols + j;
                 const position = this._generatePosition(i, j);
@@ -69,7 +72,7 @@ class Grid extends Element {
                 tile.element = this._buildTileShape(tile);
                 this._setEvents(tile);
                 layer.add(tile.element);
-                this.tiles[i][j] = tile;
+                this._tiles[i][j] = tile;
                 const group = new Group(tile);
                 this.add(group);
             }
@@ -142,16 +145,16 @@ class Grid extends Element {
 
     // todo: remove image offset
     _buildTileShape(tile) {
-        const linePoints = drawCurve(tile);
+        const linePoints = tilePath(tile);
         const {col, row} = this._indexToGrid(tile.index);
-        const {layer} = this.params;
+        const {image} = this.params;
         const shape = new Konva.Line({
             position: tile.position,
             strokeWidth: 0,
             strokeEnabled: false,
-            fillPatternImage: this.params.image,
-            fillPatternOffsetX: col * tile.width + 700,
-            fillPatternOffsetY: row * tile.height + 200,
+            fillPatternImage: image,
+            fillPatternOffsetX: col * tile.width + 500,
+            fillPatternOffsetY: row * tile.height,
             id: `tile${tile.index}`,
             points: linePoints,
             bezier: true,
@@ -172,7 +175,7 @@ class Grid extends Element {
      * @returns array top, right, bottom, left
      */
     getNear(tile) {
-        const tiles = this.tiles;
+        const tiles = this._tiles;
         const {col, row} = this._indexToGrid(tile.index);
         return [
             tiles[row - 1] ?    tiles[row - 1][col]     : undefined,
@@ -183,4 +186,4 @@ class Grid extends Element {
     }
 }
 
-export {Grid};
+module.exports = Grid;
