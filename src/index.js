@@ -2,8 +2,8 @@ import './style.css';
 import Konva from 'konva';
 const Grid = require('./grid');
 
-const COLS = 3;
-const ROWS = 3;
+const COLS = 7;
+const ROWS = 7;
 const TILE_SIZE = 100;
 const TOLERANCE = 20;
 const DISPLAY_S = 320;
@@ -54,7 +54,7 @@ const grid = new Grid({
     width: calcCanvasWidth() * (getScale() ** -1),
     height: CANVAS_HEIGHT * (getScale() ** -1),
     layer,
-    random: true || process.env.NODE_ENV === 'production',
+    random: process.env.NODE_ENV === 'production',
     cols: COLS,
     rows: ROWS,
 });

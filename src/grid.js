@@ -1,22 +1,22 @@
-const {Element, Tile, SIDE_TYPES, Point, Vector} = require('./primitives');
+const {Element, Tile, SIDE_TYPES, Point, Vector, tilePath} = require('./primitives');
 const Group = require('./group');
-const {drawCurve} = require('./canvas');
 const utils = require('./utils');
 const Konva = require('konva');
-
 const DEFAULTS = {
     cols: 3,
     rows: 3,
     tileWidth: 100,
     tileHeight: 100,
-    tolerance: 20,
-    randPosition: true,
+    display_min_width: 320,
+    canvas_height: 734,
+
     image: null,
     width: null,
     height: null,
     layer: null,
-    random: true
-};
+    tolerance: 20,
+    random: true,
+}
 
 class Grid extends Element {
     constructor(params) {
@@ -145,14 +145,14 @@ class Grid extends Element {
 
     // todo: remove image offset
     _buildTileShape(tile) {
-        const linePoints = drawCurve(tile);
+        const linePoints = tilePath(tile);
         const {col, row} = this._indexToGrid(tile.index);
-        const {layer} = this.params;
+        const {image} = this.params;
         const shape = new Konva.Line({
             position: tile.position,
             strokeWidth: 0,
             strokeEnabled: false,
-            fillPatternImage: this.params.image,
+            fillPatternImage: image,
             fillPatternOffsetX: col * tile.width + 500,
             fillPatternOffsetY: row * tile.height,
             id: `tile${tile.index}`,
