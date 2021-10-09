@@ -1,5 +1,7 @@
 # Jigsaw puzzle
 
+[Demo](https://golovanovya.github.io/puzzle/)
+
 ## Development
 
     docker-compose run --rm node ash -c "npm i && npm run build"
