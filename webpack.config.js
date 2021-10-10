@@ -28,10 +28,6 @@ module.exports = (env, argv) => {
             pathinfo: true,
             filename: '[name].js'
         },
-        devServer: {
-            contentBase: './dist',
-            hot: true
-        },
         module: {
             rules: [
                 {
@@ -53,9 +49,6 @@ module.exports = (env, argv) => {
                     ]
                 }
             ]
-        },
-        watchOptions: {
-            aggregateTimeout: 300
         },
     };
 };
